@@ -1,0 +1,71 @@
+---
+title: "NACO"
+
+author: "Philippe MICHEL"
+thanks: "Fanny TORTELIER & Dr Amélie TOUSSAINT -  Anesthésie  (Hôpital NOVO)"
+subtitle: "Analyse statistique - V1"
+lang: FR
+date: today
+date-format: "DD MMMM YYYY"
+format: 
+  pdf:
+    code-link: true
+    pdf-engine: lualatex
+keep-tex: true
+number-sections: true
+toc: true
+lof: true
+lot: true
+mainfont: Faune
+mainfontoptions:
+  - Numbers=OldStyle
+  - Ligatures=TeX
+sansfont: Myriad Pro
+sansfontoptions:
+  - Ligatures=TeX
+mathfontoptions: 
+  - Numbers=Proportional
+fig-cap-location: bottom
+tbl-cap-location: top
+class: scrartcl
+classoption: [french]
+papersize: a4paper
+editor: source
+cite-method: natbib
+bibliography: stat.bib
+license: "CC BY-SA"
+---
+
+```{r setup, include= FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, cache = FALSE,
+# knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+#
+ fig.width = 7,
+ fig.asp = 0.8,
+ out.width = "100%"
+)
+expt <- FALSE
+```
+
+
+```{r}
+#| label: info
+
+# rm(list=ls())
+library(baseph)
+library(tidyverse)
+library(kableExtra)
+library(gtsummary)
+library(labelled)
+library(DataExplorer)
+library(WriteXLS)
+
+# sessionInfo()
+```
+Étude monocentrique rétrospective et prospective 
+
+## Technique {.appendix}
+
+Les données discrètes ont été présentés en pourcentage puis comparées par le test du $\Chi^2$ de Pearson avec correction de Yates si nécessaire. Les données numériques ont été présentées par leur médiane & les quartiles puis comparées par le test non paramétrique de Wilcoxon. 
+
+L'analyse statistique a été réalisée avec le logiciel **R** [@rstat] & diverses librairies en particulier celles du `tidyverse` [@tidy] & `baseph` [@baseph]. Le flux a été géré grâce à la librairie `WORCS` [@worcs].
