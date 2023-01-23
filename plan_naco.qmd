@@ -1,0 +1,158 @@
+---
+title: "NACO"
+author: "Philippe MICHEL"
+thanks: "Fanny TORTELIER & Dr Amélie TOUSSAINT -  Anesthésie  (Hôpital NOVO)"
+subtitle: "Plan d'analyse"
+lang: FR
+date: today
+date-format: "DD MMMM YYYY"
+format: 
+  pdf:
+    code-link: true
+    pdf-engine: lualatex
+keep-tex: true
+number-sections: true
+toc: false
+lof: false
+lot: false
+mainfont: Faune
+mainfontoptions:
+  - Numbers=OldStyle
+  - Ligatures=TeX
+sansfont: Myriad Pro
+sansfontoptions:
+  - Ligatures=TeX
+mathfontoptions: 
+  - Numbers=Proportional
+fig-cap-location: bottom
+tbl-cap-location: top
+class: scrartcl
+classoption: [french]
+papersize: a4paper
+editor: source
+cite-method: natbib
+bibliography: stat.bib
+license: "CC BY-SA"
+---
+
+```{r setup, include= FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, cache = FALSE,
+# knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+#
+ fig.width = 7,
+ fig.asp = 0.8,
+ out.width = "100%"
+)
+expt <- FALSE
+```
+
+
+```{r}
+#| label: info
+
+# rm(list=ls())
+library(baseph)
+library(tidyverse)
+library(kableExtra)
+library(gtsummary)
+library(labelled)
+library(DataExplorer)
+library(epiDisplay)
+
+# sessionInfo()
+```
+
+
+
+```{r}
+tt <- read.csv("doc/naco1.csv", na.strings = c(" ","NA", "na"))
+tt$naco <-as.factor(tt$naco)
+levels(tt$naco) <- c("non","oui")
+names(tt)[7] <- "delai.chir"
+```
+
+*Ce document ne concerne que l'analyse statistique des données.*
+
+Le risque $\alpha$ retenu sera de 0,05 & la puissance de 0,8.
+
+Sauf indication contraires pour les tests simples les variables numériques seront comparées par un test non paramétrique de Wilcoxon. Un test du χ2 sera utilisé pour les variables discrètes sous réserve d’un effectif suffisant. À défaut un test de Fischer sera utilisé. Des graphiques seront réalisées pour tous les résultats intéressants.
+
+La population étudiée comportera deux groupes  définis par l'activité anti Xa mesurée lors de la décision d'opérer : 
+
+- `50` Sujets ayant une activité anti Xa < 50 ng/dL 
+- `100` Sujets ayant une activité anti Xa entre 50 & 100 ng/dL 
+
+Afin d'éviter des biais liées à la période ou à un abord différents selon la gravité, les antécédentes etc. nn échantillonnage du groupe `100` sera réalisé en se basant sur :
+
+- Le traitement anticoagulant
+- L'âge
+- Le score ASA
+
+Il ne s'agit pas d'un appariage vrai donc des tests usuels seront utilisés & non ceux pour série appariées. 
+
+## Nombre de cas
+
+Le critère principal est un délai exprimé en heure décimale. 
+
+
+```{r}
+#| label: tabnb
+
+zz <-tt |> 
+  group_by(naco) |> 
+  summarise(moyenne = round(mean(delai.chir, na.rm = TRUE),2), "écart.type" = round(sd(delai.chir, na.rm = TRUE), 2))
+zz <- zz[-3,]
+kable(zz, caption = "Étude préliminaire", booktabs = T) |> 
+  kable_styling(latex_options = c("hold_position"))
+
+nna <- n.for.2means(zz[[1,2]],zz[[2,2]],zz[[1,3]],zz[[2,3]], power = 0.9)
+nna = floor(nna$n1 *1.1)+1
+
+```
+
+En prenant les données d'une base antérieure & comparant les patients ayant ou non reçus des NACO dans la même indication opératoire on trouve (risque $\alpha$ = 5 %, puissance 90 %) qu'il faudrait deux groupes de `r nna` cas par groupe. Mais il s'agit d'une comparaison entre deux groupes avec des différences plus marquées que ceux prévus dans l'étude il est donc prudent de prendre plus de cas soit environ **`r nna *2` cas** exploitables par groupe. Et ce d'autant plus que pour les critères secondaires il faut s'attendre à de nombreuses données manquantes.
+
+## Description de la population
+
+Un tableau de corrélation reprenant toutes les variables sera réalisé afin de rechercher des variables trop corrélées. Les données manquantes seront chiffrées variables par variables. Au besoins des variables pourront alors être supprimées. 
+
+Une description simple de la population sera réalisée en présentant les données numériques par leur médiane avec ses quartiles  & pour les données discrètes en pourcentage avec son intervalle de confiance à 95 %. 
+
+Une comparaison entre les deux groupes critère par critère sera réalisée pour vérifier l'absence de différence gênante sur les données démographiques (âge, antécédents, facteurs de gravité etc.) : test du $\chi 2$ pour les données catégorielles & un test non paramétrique de Wilcoxon pour les données numériques. 
+
+
+
+## Objectif principal
+
+Le critère principal est une différence de temps (exprimé en heures décimales) entre les deux groupes. 
+ 
+ Une comparaison simple sera réalisée comparant le temps admission/bloc entre les deux groupes (test non paramétrique de Wilcoxon). La limite habituellement retenue pour une prise en charge optimale est de 48 h. On fera donc une comparaison entre les deux groupes des pourcentages de cas ayant été pris en charge avant/après cette limite présentée en risque relatif. Des graphiques présenteront ces résultats 
+ 
+ 
+ On recherchera ensuite d'autres facteurs pouvant influer sur ce délai en comparant les délai pour chaque critère (test de Wilcoxon pour les critères discrets, test de corrélation de rang de Spearman pour les donénes numériques). 
+ 
+Un modèle de régression linéaire sera réalisé basée sur les  comparaison entre les deux groupes de tous les facteurs recueillis dans l'étude & pouvant avoir un impact sur  le délai (p > 0.2) & l’appartenance au groupe `50` ou `100` .
+
+Une recherche du meilleur modèle sera réalisée par un step-by-step descendant évaluée sur le critère d’information d’Akaike (en gardant le critère `groupe`. Cette étape sera réalisée après imputation des données manquantes mais le résultat final sera calculé sur les données vraies.
+
+## Critères secondaires
+
+### Impact de la nouvelle stratégie
+L'impact de la nouvelle stratégie sera évaluée su quatre cibles :
+
+- **Pertes sanguine** comparaison par un test de Wilcoxon.
+- **Transfusion** comparaison par un test de Wilcoxon pour chaque type de produit sanguin (CGR totaux, pré op, per opératoire & post op, PFC per opératoire, CUP per opératoire & PPSB per opératoire.
+- **Morbidité** Définie par au moins une complication. Test du $\chi 2$. Une analyse complication par complication grâce au même test sera ensuite réalisée pour chaque groupe de complication (infectieux, thrombo-empbolique, cardio-vasculaire & hémorragies post op) 
+- **Mortalité hospitalière** Test du $\chi 2$.
+
+### Identifier les facteurs impactant la prise en charge des patients.
+
+ Une analyse par comparaisons simples du délai admission/bloc, critère par critère,  sera effectuée  (test de Wilcoxon pour les critères discrets, test de corrélation de rang de Spearman).
+ 
+Un modèle de régression linéaire sera ensuite réalisé basée sur les  comparaison entre les deux groupes de tous les facteurs recueillis dans l'étude & pouvant avoir un impact sur  le délai (p > 0.2) & l’appartenance au groupe `50` ou `100`.
+
+Une recherche du meilleur modèle sera réalisée par un step-by-step descendant évaluée sur le critère d’information d’Akaike (en gardant le critère `groupe`. Cette étape sera réalisée après imputation des données manquantes mais le résultat final sera calculé sur les données vraies.
+
+## Technique {.appendix}
+
+L'analyse statistique sera réalisée avec le logiciel **R** [@rstat] & diverses librairies en particulier `tidyverse` [@tidy] `epiDisplay` [@epid] & `baseph` [@baseph].

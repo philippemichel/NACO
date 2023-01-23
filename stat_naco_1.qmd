@@ -6,7 +6,7 @@ thanks: "Fanny TORTELIER & Dr Amélie TOUSSAINT -  Anesthésie  (Hôpital NOVO)"
 subtitle: "Analyse statistique - V1"
 lang: FR
 date: today
-date-format: "DD MMMM YYYY"
+date-format: "DD MMMM YYYY" 
 format: 
   pdf:
     code-link: true
