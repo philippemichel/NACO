@@ -83,14 +83,18 @@ expx <- FALSE
 classeur <- "copsca1.xls"
 if (expx){system(paste0("rm -f ",classeur))}
 #
-cat <- list(all_continuous() ~ "t.test", all_categorical() ~ "chisq.test")
+cat <- list(all_continuous() ~ "wilcox.test", all_categorical() ~ "chisq.test")
 ```
 
 ## Technique 
 
-Les données discrètes ont été présentés en pourcentage puis comparées par le test du $\Chi^2$ de Pearson avec correction de Yates si nécessaire. Les données numériques ont été présentées par leur médiane & les quartiles puis comparées par le test non paramétrique de Wilcoxon. 
+L'effectif étant de petite taille des tests de normalité ont été effectués sur les variables principales en particulier le `délai chirurgical` qui n'a pas une distribution normale (test de shapiro : `r beaup(0.00007,affp = 1)`). Des tests non paramétriques ont donc été utilisés.
 
-L'analyse statistique a été réalisée avec le logiciel **R** [@rstat] & diverses librairies en particulier celles du `tidyverse` [@tidy] & `baseph` [@baseph]. Le flux a été géré grâce à la librairie `WORCS` [@worcs].
+Les données discrètes ont été présentés en pourcentage puis comparées par le test du $\Chi^2$ de Pearson avec correction de Yates si nécessaire. Les données numériques ont été présentées par leur médiane & les quartiles puis comparées par le test non paramétrique de Wilcoxon Mann Whitney ou une analyse de variance (ANOVA) si le critère de tri avait plus de deux modalités. 
+
+Les analyse en régression ont été réalisées dans un premier temps en incorporant toutes les variables significatives au seuil de 0,20 dans un modèle de régression puis une recherche du meilleur modèle en pas-à-pas descendant basé sur l'AIC a été effectuée. Néanmoins les variables majeures (groupe...) ont été forcées.
+
+L'analyse statistique a été réalisée avec le logiciel **R** [@rstat] & diverses librairies en particulier celles du `tidyverse` [@tidy] & `baseph` [@baseph].
 
 # Description de la population
 
@@ -101,7 +105,6 @@ ncas <- nrow(tt)
 zz <- tt |> 
   group_by(groupe) |> 
   count()
-
 ```
 
 
@@ -116,10 +119,9 @@ L'échantillon comporte `r nrow(tt)` cas  dont `r zz$n[1]` dans le groupe `avant
 #| tbl-cap: Données démographiques
 
 tt |>
-dplyr::select(2,3,9:20,59:63, groupe) |>
+dplyr::select(age,sexe,type_fracture:marche_avant_avec_aide,score_asa:irc, groupe) |>
 tbl_summary(missing = "no", 
-              by = groupe,
-            statistic = list(all_continuous() ~ "{mean} ({sd})", all_continuous() ~ "{mean} ({sd})")) |>
+              by = groupe) |>
 modify_header(label ~ " ") |>
   add_p(test = cat) |>
   add_overall() |>
@@ -157,8 +159,50 @@ theme_light() +
 
 On vérifie que dans la seconde période les pratiques se sont réellement modifiées. 
 
+```{r}
+#| label: tbl-modifprat
+#| tbl-cap: Modifictaion des pratiques
+
+tt |>
+dplyr::select(groupe,taux_adequation_protocole, ddosage_rec, ) |>
+tbl_summary(missing = "no", 
+              by = groupe) |>
+modify_header(label ~ " ") |>
+  add_p(test = cat) |>
+  add_overall() |>
+bold_labels() |>
+pexptabph(nomfich = classeur,
+nomsheet = "modifprat",
+exp = expx) 
+```
+
+```{r}
+#| label: fig-periodedosage
+#| fig-cap: Dernier dosage selon la période
+
+tt |>
+  drop_na(ddosage_rec) |>
+  ggplot(aes(fill = ddosage_rec, x = groupe)) +
+  geom_bar(position = "fill") +
+  labs(title = "Dernier dosage selon la période",
+       x = "Période",
+       y = "%", 
+       fill = "ng/mL") +
+  theme_light() +
+  scale_y_continuous(labels = seq(0,100,25)) +
+  colorspace::scale_fill_discrete_qualitative(palette = "Dark 3") +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    plot.subtitle = element_text(size = 12),
+    axis.title.x = element_text(size = 12),
+    axis.title.y = element_text(size = 12),
+    legend.title = element_text(size = 12),
+    legend.position = "right") 
+
+```
 
 
+Il y a effectivement plus de patients opérés avec un dosage entre 50 & 100 ng/mL dans la seconde période.
 
 # Critère principal
 *mettre en évidence une réduction du délai de prise en charge chirurgicale de la FESF par la mise en place d’un ajustement du seuil préopératoire du dosage des NACO suite à une procédure collégiale en septembre 2021.*
@@ -172,8 +216,7 @@ On vérifie que dans la seconde période les pratiques se sont réellement modif
 tt |>
 dplyr::select(delai_chirurgical, groupe, delai48) |>
 tbl_summary(missing = "no", 
-            by = groupe,
-            statistic = list(all_continuous() ~ "{mean} ({sd})")) |> 
+            by = groupe) |> 
 modify_header(label ~ " ") |>
 add_p(test = cat) |>
 add_overall() |>
@@ -221,9 +264,9 @@ tt |>
 #| tbl-cap: Facteurs influants le délai chirurgical 
 
 tt |>
-tbl_continuous(variable = delai_chirurgical, include = c(groupe, score_asa, 87,3,9:15,17:20,59:63)
+tbl_continuous(variable = delai_chirurgical, include = c(groupe, score_asa, agerec,sexe,type_fracture:nb_medicament_entree,adl_avant:marche_avant_avec_aide,score_asa:irc)
                ) |>
-add_p(test = list(all_continuous() ~ "t.test")) |> 
+add_p(test = list(all_continuous() ~ "wilcox.test")) |> 
 bold_labels() |>
   modify_header(label ~ " ") |>
 pexptabph(nomfich = classeur,
@@ -244,7 +287,7 @@ nomsheet = "fact2",
 exp = expx) 
 ```
 
-Une interaction forte entre l'âge & l'a vie en institution entre autres a obligé à limiter les variables dans le modèle de régression. La période ne semble pas influencer le délai chirurgical (p = 0.3). Les facteurs influant sont l'âge , le score ADL (p = 0,01) et le type de fracture (p = 0.01). Le délai semble plus court chez les patients ASA 2 ou 3 que 4.
+Une interaction forte entre l'âge & l'a vie en institution entre autres a obligé à limiter les variables dans le modèle de régression. La période ne semble pas influencer le délai chirurgical. Les facteurs influant sont l'âge , le score ADL et le type de fracture . Le délai semble plus court chez les patients ASA 2 ou 3 que 4.
 
 
 
@@ -330,10 +373,9 @@ tt |>
 
 
 tt |>
-dplyr::select(groupe, 64 :71) |>
+dplyr::select(groupe, cgr_pre_operatoire :acide_tranexamique) |>
 tbl_summary(missing = "no", 
-            by = groupe,
-            statistic = list(all_continuous() ~ "{mean} ({sd})")) |> 
+            by = groupe) |> 
 modify_header(label ~ " ") |>
 add_p(test = cat) |>
 add_overall() |>
@@ -353,10 +395,9 @@ Il n'y a pas de différence entre les deux périodes pour les transfusions sangu
 
 
 tt |>
-dplyr::select(ddosage_rec, 64 :71) |>
+dplyr::select(ddosage_rec, cgr_pre_operatoire :acide_tranexamique) |>
 tbl_summary(missing = "no", 
-            by = ddosage_rec,
-            statistic = list(all_continuous() ~ "{mean} ({sd})")) |> 
+            by = ddosage_rec) |> 
 modify_header(label ~ " ") |>
 add_p(test = cat) |>
 add_overall() |>
@@ -376,10 +417,9 @@ Il n'y a pas de différence pour les transfusions sanguines ou autre traitement 
 
 
 tt |>
-dplyr::select(groupe, 78:81, readmission_j_30, deces_intra_hospitalier) |>
+dplyr::select(groupe, complications_infectieuses:complications_hemorragiques, readmission_j_30, deces_intra_hospitalier) |>
 tbl_summary(missing = "no", 
-            by = groupe,
-            statistic = list(all_continuous() ~ "{mean} ({sd})")) |> 
+            by = groupe) |> 
 modify_header(label ~ " ") |>
 add_p(test = cat) |>
 add_overall() |>
@@ -393,12 +433,89 @@ exp = expx)
 # Critères secondaires 2
 *Facteurs impactant la prise en charge*
 
-## Complications du décubitus dorsal
-## Complications du décubitus dorsal (Les escarres ...)
-## Facteurs liés au terrain pré-existant 
-## Jour d’admission sur la prise en charge (week-end/jour férié/garde)
+## Complications de décubitus
+
+```{r}
+#| label: tbl-escarres
+#| tbl-cap: Escarres
+
+tt |>
+dplyr::select(groupe, escarres_sejour) |>
+tbl_summary(missing = "no", 
+            by = groupe) |> 
+modify_header(label ~ " ") |>
+add_p(test = cat) |>
+add_overall() |>
+bold_labels() |>
+pexptabph(nomfich = classeur,
+nomsheet = "escarres",
+exp = expx) 
+```     
 
 
+## Degré de dépendance selon l’échelle ADL de Katz
+
+Le score ALD  n'ayant été noté que pour 4 patients aucune analyse n'est possible.
+
+## Complications liés au terrain
+
+```{r}
+#| label: tbl-terrain
+#| tbl-cap: Complications liés au terrain
+
+tt |>
+dplyr::select(groupe, confusion_sejour, contention_physique_sejour, sonde_sortie, rea, delai_bloc_fauteuil, delai_bloc_marche, dms_structure, rad) |>
+tbl_summary(missing = "no", 
+            by = groupe) |> 
+modify_header(label ~ " ") |>
+add_p(test = cat) |>
+add_overall() |>
+bold_labels() |>
+pexptabph(nomfich = classeur,
+nomsheet = "terrain",
+exp = expx) 
+```     
+
+## Prise en charge
+
+```{r}
+#| label: tbl-pec
+#| tbl-cap: Prise en charge 
+
+tt |>
+dplyr::select(groupe, pec_denutrition:kt_femoral_ou_bloc_analgesique, pm_antalg:pm_traitement_perso) |>
+tbl_summary(missing = "no", 
+            by = groupe) |> 
+modify_header(label ~ " ") |>
+add_p(test = cat) |>
+add_overall() |>
+bold_labels() |>
+pexptabph(nomfich = classeur,
+nomsheet = "pec",
+exp = expx) 
+```   
+
+
+## Jour d’admission sur la prise en charge
+
+```{r}
+#| label: tbl-jour
+#| tbl-cap: Prise en charge 
+
+tt |>
+dplyr::select(entree, delai_chirurgical,deces_intra_hospitalier,delai_attente_sau_pontoise, pec_douleur, kt_femoral_ou_bloc_analgesique, pertes_sanguines_estimees) |>
+tbl_summary(missing = "no", 
+            by = entree) |> 
+modify_header(label ~ " ") |>
+add_p(list(all_continuous() ~ "aov", all_categorical() ~ "chisq.test")) |>
+add_overall() |>
+bold_labels() |>
+pexptabph(nomfich = classeur,
+nomsheet = "jour",
+exp = expx) 
+```  
+
+L'attente au SAU est plus longue la semaine (en journée). Plus de décès le week-end ? 
 
 
 :::
