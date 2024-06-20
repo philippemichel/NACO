@@ -18,7 +18,7 @@ library(lubridate)
 library(baseph)
 #
 limg <- dmy("30/09/2021")
-nna <- c("NA",""," ","AUCUN", "Abs","na","Na")
+nna <- c("NA",""," ","AUCUN", "Abs","na","Na","Manquant")
 tt <- read_ods("datas/stopnaco.ods", na = nna) |>
     clean_names() |>
   mutate(date_entree = mdy_hm(date_entree)) |> 
@@ -32,6 +32,7 @@ mutate(type_fracture = fct_recode(type_fracture,
            "Col" = "Col 4")) |> 
 mutate(transfert = ifelse((transfert_beaumont == "yes") | (transfert_magny == "yes") | (transfert_autre == "yes"), "yes", "no" )) |> 
     relocate(transfert, .after = transfert_autre) |>
+  mutate(transfert = as.factor(transfert)) |>
     dplyr::select( !(starts_with("transfert_"))) |>
     mutate(acide_tranexamique = cut(acide_tranexamique,
                                  include.lowest = TRUE,
@@ -51,7 +52,20 @@ mutate(transfert = ifelse((transfert_beaumont == "yes") | (transfert_magny == "y
   mutate(groupe =   fct_relevel(groupe,
     "avant", "après"
   )) |> 
-  mutate(delai48 =as.factor(ifelse(delai_chirurgical>48,"> 48 h", "< 48 h")))
+  mutate(delai48 =as.factor(ifelse(delai_chirurgical>48,"> 48 h", "< 48 h"))) |> 
+  mutate(bmi = bmiph(bmi, lang = "eng")) |> 
+  mutate(agerec = cut(age,
+                      breaks = seq(70, 100, 5),
+                      labels = c("70-75", "76-80", "81-85", "86-90", "91-95", "96-100")
+  ))|>
+  mutate(agerec = as.factor(agerec)) |> 
+  mutate(ddosage_rec = cut(dernier_dosage,
+                                   include.lowest = TRUE,
+                                   right = FALSE,
+                                   dig.lab = 4,
+                                   breaks = c(0, 50, 100, 1000),
+                                   labels = c("<50", "50-100", "> 100"))) |> 
+  mutate(ddosage_rec = as.factor(ddosage_rec))
 
   
   
