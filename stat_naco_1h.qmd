@@ -48,7 +48,7 @@ cache: false
  
 **Évaluer l’intérêt d’une procédure de service de gestion des NACO dans la prise en charge des fractures de l’extrémité supérieure du fémur.**
  
-Étude monocentrique rétrospective et prospective
+Étude monocentrique rétrospective et prospective à témoin historique.
 
 
 
@@ -79,31 +79,152 @@ theme_gtsummary_language(language = "fr", decimal.mark = ",")
 options(OutDec = ",")
 #
 load("datas/stopnaco.RData")
-expx <- TRUE
+expx <- FALSE
 classeur <- "copsca1.xls"
 if (expx){system(paste0("rm -f ",classeur))}
 ```
 
+## Technique 
+
+Les données discrètes ont été présentés en pourcentage puis comparées par le test du $\Chi^2$ de Pearson avec correction de Yates si nécessaire. Les données numériques ont été présentées par leur médiane & les quartiles puis comparées par le test non paramétrique de Wilcoxon. 
+
+L'analyse statistique a été réalisée avec le logiciel **R** [@rstat] & diverses librairies en particulier celles du `tidyverse` [@tidy] & `baseph` [@baseph]. Le flux a été géré grâce à la librairie `WORCS` [@worcs].
+
 # Description de la population
+
+```{r}
+#| label: nb-cas
+
+ncas <- nrow(tt)
+zz <- tt |> 
+  group_by(groupe) |> 
+  count()
+
+```
+
+
+L'échantillon comporte `r nrow(tt)` cas  dont `r zz$n[1]` dans le groupe `avant` et `r zz$n[2]` dans le groupe `après`.
+
+
+
+## Démographie
+
+```{r}
+#| label: tbl-demog
+#| tbl-cap: Données démographiques
+
+tt |>
+dplyr::select(2,3,9:20,59:63) |>
+tbl_summary(missing = "no", 
+              
+            statistic = list(all_continuous() ~ "{mean} ({sd})", all_continuous() ~ "{mean} ({sd})")) |>
+modify_header(label ~ " ") |>
+bold_labels() |>
+pexptabph(nomfich = classeur,
+nomsheet = "demog1",
+exp = expx) 
+```
+
+```{r}
+#| label: fig-ages
+#| fig-cap: Pyramide des âges
+
+tt |>
+    mutate(agerec = cut(age,
+    breaks = seq(70, 100, 5),
+    labels = c("70-75", "76-80", "81-85", "86-90", "91-95", "96-100")
+))|>
+mutate(agerec = as.factor(agerec)) |>
+# Tracé du graphique
+age_pyramid(age_group = "agerec",
+            split_by = "sexe",
+            pal = c("pink", "lightblue"),
+show_midpoint = FALSE) +
+theme_light() +
+    labs(title = "Pyramide des âges",
+        fill = "Sexe")+ 
+    theme(
+      plot.title = element_text(size = 16, face = "bold"),
+      plot.subtitle = element_text(size = 12),
+      axis.title.x = element_blank(),
+      axis.title.y = element_blank(),
+      legend.title = element_blank(),
+      legend.position = "bottom") 
+```
+
 
 # Critère principal
 *mettre en évidence une réduction du délai de prise en charge chirurgicale de la FESF par la mise en place d’un ajustement du seuil préopératoire du dosage des NACO suite à une procédure collégiale en septembre 2021.*
 
-# Critères secondaires
 
-## Critères 1
+```{r}
+#| label: tbl-delai1
+#| tbl-cap: Délai admission-bloc
+
+
+tt |>
+dplyr::select(delai_chirurgical, groupe, delai48) |>
+tbl_summary(missing = "no", 
+            by = groupe,
+            statistic = list(all_continuous() ~ "{mean} ({sd})")) |> 
+modify_header(label ~ " ") |>
+add_p(test = list(all_continuous() ~ "t.test")) |>
+add_overall() |>
+bold_labels() |>
+pexptabph(nomfich = classeur,
+nomsheet = "delai1",
+exp = expx) 
+```
+
+```{r}
+#| label: fig-delai1
+#| fig-cap: Délai admission-bloc
+
+tt |> 
+  ggplot() +
+  aes(y = delai_chirurgical, x = groupe, fill = groupe) +
+  geom_violin() +
+  geom_boxplot(width = 0.2, fill = "grey90") +
+  labs(title = "Délai admission-bloc",
+         x = "Période",
+         y = "heures") +
+  geom_hline(yintercept = 48, linetype = "dotdash", col = "grey40") +
+    theme_light() +
+    colorspace::scale_fill_discrete_qualitative(palette = "Dark 3") +
+    theme(
+      plot.title = element_text(size = 16, face = "bold"),
+      plot.subtitle = element_text(size = 12),
+      axis.title.x = element_text(size = 12),
+      legend.title = element_text(size = 12),
+      axis.title.y = element_text(
+        size = 12,
+        angle = 90,
+        vjust = .5
+      ),
+      axis.text.x = element_text(size = 12),
+      axis.text.y = element_text(size = 12),
+      legend.position = "none"
+    )
+```
+
+
+
+
+# Critères secondaires 1
 *Mesure de l’impact de la nouvelle stratégie*
 
 
-### Pertes sanguines estimées en per opératoire 
+## Pertes sanguines estimées en per opératoire
 
-### Transfusion
+
+
+## Transfusion
       - Nombre de CGR transfusés (total, pré, per et post opératoire)
       - Nombre de PFC transfusés (per–opératoire)
       - Nombre de CUP transfusés (per–opératoire)
       - Nombre de PPSB administrés (per–opératoire)
 
-### Morbidité hospitalière
+## Morbidité hospitalière
       - Complications infectieux (infection du site opératoire, infections nosocomiales : urinaires, pneumopathies, autres).
       - Complications thromboemboliques (embolie pulmonaire, thrombose veineuse profonde)
       - Complications cardio-vasculaires (décompensation d’insuffisance cardiaque, OAP, SCA)
@@ -112,19 +233,16 @@ if (expx){system(paste0("rm -f ",classeur))}
 
 ###
 Mortalité hospitalière
-## Critères 2
+
+# Critères secondaires 2
 *Facteurs impactant la prise en charge*
 
-### Complications du décubitus dorsal
-### Complications du décubitus dorsal (Les escarres ...)
-### Facteurs liés au terrain pré-existant 
-### Jour d’admission sur la prise en charge (week-end/jour férié/garde)
+## Complications du décubitus dorsal
+## Complications du décubitus dorsal (Les escarres ...)
+## Facteurs liés au terrain pré-existant 
+## Jour d’admission sur la prise en charge (week-end/jour férié/garde)
 
 
-# Technique {.appendix}
 
-Les données discrètes ont été présentés en pourcentage puis comparées par le test du $\Chi^2$ de Pearson avec correction de Yates si nécessaire. Les données numériques ont été présentées par leur médiane & les quartiles puis comparées par le test non paramétrique de Wilcoxon. 
-
-L'analyse statistique a été réalisée avec le logiciel **R** [@rstat] & diverses librairies en particulier celles du `tidyverse` [@tidy] & `baseph` [@baseph]. Le flux a été géré grâce à la librairie `WORCS` [@worcs].
 
 :::
