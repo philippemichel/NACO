@@ -9,5 +9,10 @@
 *.fff
 *.log
 *.tex
+*.html
 .Rproj.user
 doc/
+QTDublinIrish.otf
+_extensions
+datas
+plan_naco_files

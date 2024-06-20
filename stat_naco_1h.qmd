@@ -1,0 +1,130 @@
+---
+title: "Stop NACO"
+subtitle: "Rapport Statistique - V 1.0"
+lang: fr
+language:
+  title-block-author-single: "Auteur"
+author:
+  - name: "D<sup>r</sup> Philippe MICHEL"
+    orcid: "0000-0003-2392-7186"
+    email: "philippe.michel@ght-novo.fr"
+    role: "Statisticien"
+    affiliations:
+      name: "USRC - H\u00f4pital NOVO"
+      city: Pontoise
+      department: "Unit\u00e9 de Soutien à la Recherche Clinique"
+title-block-banner: true
+format:
+  html:
+    embed-resources: true
+    theme: minty
+    code-fold: true
+    html-math-method: katex
+    highlight-style: ayu
+    page-layout: full
+    toc: true
+    number-sections: true
+    smooth-scroll: true
+    citation-hover: true
+bibliography: stat.bib
+# csl: jama.csl
+license: "MIT"
+warning: false
+message: false
+cache: false
+---
+
+::: {.panel-tabset}
+
+
+# Introduction
+
+
+ Investigateur principal :M<sup>me</sup> Fanny TORTELIER
+ 
+ Responsable scientifique : D<sup>r</sup> Amélie TOUSSAINT -- Service d’Anesthésie-Réanimation -- Hôpital NOVO (Site Pontoise)
+ 
+ Chef de projet : M<sup>me</sup> Véronique \\textsc{DA COSTA}
+ 
+**Évaluer l’intérêt d’une procédure de service de gestion des NACO dans la prise en charge des fractures de l’extrémité supérieure du fémur.**
+ 
+Étude monocentrique rétrospective et prospective
+
+
+
+```{r}
+#| label: setup
+
+rm(list = ls())
+#
+library(baseph)
+library(janitor)
+library(tidyverse)
+library(gtsummary)
+library(kableExtra)
+library(lubridate)
+library(kableExtra)
+library(forestmodel)
+library(labelled)
+library(epiDisplay)
+library(visdat)
+library(GGally)
+library(ggridges)
+library(colorspace)
+library(xlsx)
+library(apyramid)
+library(plotly)
+#
+theme_gtsummary_language(language = "fr", decimal.mark = ",")
+options(OutDec = ",")
+#
+load("datas/stopnaco.RData")
+expx <- TRUE
+classeur <- "copsca1.xls"
+if (expx){system(paste0("rm -f ",classeur))}
+```
+
+# Description de la population
+
+# Critère principal
+*mettre en évidence une réduction du délai de prise en charge chirurgicale de la FESF par la mise en place d’un ajustement du seuil préopératoire du dosage des NACO suite à une procédure collégiale en septembre 2021.*
+
+# Critères secondaires
+
+## Critères 1
+*Mesure de l’impact de la nouvelle stratégie*
+
+
+### Pertes sanguines estimées en per opératoire 
+
+### Transfusion
+      - Nombre de CGR transfusés (total, pré, per et post opératoire)
+      - Nombre de PFC transfusés (per–opératoire)
+      - Nombre de CUP transfusés (per–opératoire)
+      - Nombre de PPSB administrés (per–opératoire)
+
+### Morbidité hospitalière
+      - Complications infectieux (infection du site opératoire, infections nosocomiales : urinaires, pneumopathies, autres).
+      - Complications thromboemboliques (embolie pulmonaire, thrombose veineuse profonde)
+      - Complications cardio-vasculaires (décompensation d’insuffisance cardiaque, OAP, SCA)
+      - Complications hémorragiques post-opératoires (hématome du site opératoire nécessitant une prise en charge)
+      - Réadmission à 30 jours 
+
+###
+Mortalité hospitalière
+## Critères 2
+*Facteurs impactant la prise en charge*
+
+### Complications du décubitus dorsal
+### Complications du décubitus dorsal (Les escarres ...)
+### Facteurs liés au terrain pré-existant 
+### Jour d’admission sur la prise en charge (week-end/jour férié/garde)
+
+
+# Technique {.appendix}
+
+Les données discrètes ont été présentés en pourcentage puis comparées par le test du $\Chi^2$ de Pearson avec correction de Yates si nécessaire. Les données numériques ont été présentées par leur médiane & les quartiles puis comparées par le test non paramétrique de Wilcoxon. 
+
+L'analyse statistique a été réalisée avec le logiciel **R** [@rstat] & diverses librairies en particulier celles du `tidyverse` [@tidy] & `baseph` [@baseph]. Le flux a été géré grâce à la librairie `WORCS` [@worcs].
+
+:::

@@ -118,6 +118,12 @@ Un tableau de corrélation reprenant toutes les variables sera réalisé afin de
 
 Une description simple de la population sera réalisée en présentant les données numériques par leur médiane avec ses quartiles  & pour les données discrètes en pourcentage avec son intervalle de confiance à 95 %. 
 
+**Afficher nb cas opéré avec dosage entre 50 & 100**
+
+**Seuil de décision selon la date de l'opération**     
+
+**Insuffisance rénale chronique** 
+
 Une comparaison entre les deux groupes critère par critère sera réalisée pour vérifier l'absence de différence gênante sur les données démographiques (âge, antécédents, facteurs de gravité etc.) : test du $\chi 2$ pour les données catégorielles & un test non paramétrique de Wilcoxon pour les données numériques. 
 
 
