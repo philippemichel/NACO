@@ -72,7 +72,7 @@ mutate(transfert = ifelse((transfert_beaumont == "yes") | (transfert_magny == "y
   
   
 bn <- read_ods("datas/stopnaco.ods", sheet=2)
-  # var_label(tt) <- bn$nom
+var_label(tt) <- bn$nom
 
 
 #

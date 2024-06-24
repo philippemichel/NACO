@@ -1,55 +1,56 @@
 ---
-title: "Stop NACO"
+title: "STOP-NACO"
 subtitle: "Rapport Statistique - V 1.0"
+author: "D\\textsuperscript{r} Philippe \\textsc{Michel} -- USCR, Hôpital NOVO"
 lang: fr
-language:
-  title-block-author-single: "Auteur"
-author:
-  - name: "D<sup>r</sup> Philippe MICHEL"
-    orcid: "0000-0003-2392-7186"
-    email: "philippe.michel@ght-novo.fr"
-    role: "Statisticien"
-    affiliations:
-      name: "USRC - H\u00f4pital NOVO"
-      city: Pontoise
-      department: "Unit\u00e9 de Soutien à la Recherche Clinique"
-title-block-banner: true
 format:
-  html:
-    embed-resources: true
-    theme: minty
-    code-fold: true
-    html-math-method: katex
-    highlight-style: ayu
-    page-layout: full
-    toc: true
-    number-sections: true
-    smooth-scroll: true
-    citation-hover: true
-bibliography: stat.bib
-# csl: jama.csl
+ titlepage-pdf:
+  titlepage: bg-image
+  titlepage-bg-image: "novo_usrc.png"
+  logo-space-after: "0\\baselineskip"
+  documentclass: scrreprt
+  number-sections: true
+  titlepage-footer:  "Fanny \\textsc{Tortelier}  \\newline D\\textsuperscript{r} Amélie  \\textsc{Toussaint} -- Service d’Anesthésie-Réanimation, Hôpital \\textsc{novo} (Site Pontoise)\\newline \\newline Chef de projet : M\\textsuperscript{me} Véronique \\textsc{Da Costa}\\newline \\newline Évaluer l’intérêt d’une procédure de service de gestion des NACO dans la prise en charge des fractures de l’extrémité supérieure du fémur. \\newline \\newline \\today"
+titlepage-theme:
+  title-fontstyle: ["Huge", "bfseries"]
+  title-color: novo
+  subtitle-color: novo
+  subtitle-fontstyle: ["huge"]
+  logo-size: "0.2\\textheight"
+  vrule-width: "0.1cm"
+  vrule-color: novo
+include-in-header:
+   text: |
+    \definecolor{novo}{HTML}{27484b}
+    \usepackage[locale = FR, per-mode = symbol]{siunitx}
+    \usepackage[section]{placeins}
+    \usepackage{arsenal}
+df-print : kable
+jss-pdf:
+  keep-tex: true
+pdf-engine: lualatex
+keep-tex: true
+number-sections: true
+toc: true
+lof: true
+lot: true
+fig-cap-location: bottom
+tbl-cap-location: top
+classoption: [french]
+papersize: a4
+editor: source
+#bibliography: stat.bib
+#cite-method: biblatex
+#csl: jama.csl
+#reference-location: margin
+#citation-location: margin
 license: "MIT"
+fig-width: 10
+echo: false
 warning: false
 message: false
 cache: false
 ---
-
-::: {.panel-tabset}
-
-
-# Introduction
-
-
- Investigateur principal :M<sup>me</sup> Fanny TORTELIER
- 
- Responsable scientifique : D<sup>r</sup> Amélie TOUSSAINT -- Service d’Anesthésie-Réanimation -- Hôpital NOVO (Site Pontoise)
- 
- Chef de projet : M<sup>me</sup> Véronique \\textsc{DA COSTA}
- 
-**Évaluer l’intérêt d’une procédure de service de gestion des NACO dans la prise en charge des fractures de l’extrémité supérieure du fémur.**
- 
-Étude monocentrique rétrospective et prospective à témoin historique.
-
 
 
 ```{r}
@@ -103,15 +104,7 @@ tabp <- function(dfx, nn = 2, nom = "Période") {
 }
 ```
 
-## Technique 
 
-L'effectif étant de petite taille des tests de normalité ont été effectués sur les variables principales en particulier le `délai chirurgical` qui n'a pas une distribution normale (test de shapiro : `r beaup(0.00007,affp = 1)`). Des tests non paramétriques ont donc été utilisés.
-
-Les données discrètes ont été présentés en pourcentage puis comparées par le test du $\Chi^2$ de Pearson avec correction de Yates si nécessaire. Les données numériques ont été présentées par leur médiane & les quartiles puis comparées par le test non paramétrique de Wilcoxon Mann Whitney ou une analyse de variance (ANOVA) si le critère de tri avait plus de deux modalités. 
-
-Les analyse en régression ont été réalisées dans un premier temps en incorporant toutes les variables significatives au seuil de 0,20 dans un modèle de régression puis une recherche du meilleur modèle en pas-à-pas descendant basé sur l'AIC a été effectuée. Néanmoins les variables majeures (groupe...) ont été forcées.
-
-L'analyse statistique a été réalisée avec le logiciel **R** [@rstat] & diverses librairies en particulier celles du `tidyverse` [@tidy] & `baseph` [@baseph].
 
 # Description de la population
 
@@ -127,7 +120,17 @@ zz <- tt |>
 
 L'échantillon comporte `r nrow(tt)` cas  dont `r zz$n[1]` dans le groupe `avant` et `r zz$n[2]` dans le groupe `après`.
 
+## Données manquantes
 
+```{r}
+#| label: fig-manq
+#| fig-cap: Données manquantes
+#| fig-asp: 0.8
+
+vis_dat(tt)
+```
+
+Les données manquantes concernent essentiellement les variables liées à la prescription médicale, au taux d'adéquation au protocole ou à la cause du retard.
 
 ## Démographie
 
@@ -151,7 +154,7 @@ La seule différence gênante est l'évolution du score ASA qui semble plus éle
 ```{r}
 #| label: fig-ages
 #| fig-cap: Pyramide des âges
-
+#| fig-asp: 0.8
 tt |>
 # Tracé du graphique
 age_pyramid(age_group = "agerec",
@@ -191,7 +194,7 @@ exp = expx)
 ```{r}
 #| label: fig-periodedosage
 #| fig-cap: Dernier dosage selon la période
-
+#| fig-asp: 0.8
 tt |>
   drop_na(ddosage_rec) |>
   ggplot(aes(fill = ddosage_rec, x = groupe)) +
@@ -241,6 +244,7 @@ exp = expx)
 ```{r}
 #| label: fig-delai1
 #| fig-cap: Délai admission-bloc
+#| fig-asp: 0.8
 
 tt |> 
   ggplot() +
@@ -283,12 +287,13 @@ bold_labels() |>
   modify_header(label ~ " ") |>
 pexptabph(nomfich = classeur,
 nomsheet = "fact1",
-exp = expx) 
+exp = expx, lg = TRUE) 
 ```
 
 ```{r}
-#| label: tbl-fact2
-#| tbl-cap: Facteurs influants le délai chirurgical
+#| label: fig-fact2
+#| fig-cap: Facteurs influants le délai chirurgical
+#| fig-asp: 1.2
 
 lm(delai_chirurgical ~ groupe + score_asa + agerec + adl_avant+ type_fracture ,data = tt) |> 
 forest_model() 
@@ -322,9 +327,10 @@ exp = expx)
 ```
 
 ```{r}
-#| label: tbl-pertes2
-#| tbl-cap: Pertes sanguines estimées en per opératoire
-
+#| label: fig-pertes2
+#| fig-cap: Pertes sanguines estimées en per opératoire
+#| fig-asp: 0.8
+#| 
 zz <- tt |> 
   filter(ddosage_rec != "> 100")
 lm(pertes_sanguines_estimees~groupe + ddosage_rec +score_asa, data = zz) |> 
@@ -337,6 +343,7 @@ Le saignement per-opératoire ne semble pas être influencé par le dernier dosa
 ```{r}
 #| label: fig-pertes1
 #| fig-cap: Pertes sanguines estimées en per opératoire & dosage antiXa
+#| fig-asp: 1
 
 tt |> 
   drop_na(ddosage_rec) |>
@@ -424,7 +431,7 @@ tbl_summary(missing = "no",
 tabp() |> 
 pexptabph(nomfich = classeur,
 nomsheet = "morbi",
-exp = expx) 
+exp = expx, lg = TRUE) 
 ```     
 
 
@@ -487,7 +494,8 @@ tt |>
 tabp() |> 
   pexptabph(nomfich = classeur,
             nomsheet = "pec",
-            exp = expx) 
+            exp = expx,
+            lg = TRUE) 
 ```   
 
 
@@ -514,4 +522,12 @@ exp = expx)
 
 Vu le faible nombre de cas les "`vendredi après 16 h`" ont été considérés comme du week-end. L'attente au SAU est plus longue la semaine (en journée). Plus de décès le week-end ? 
 
-:::
+# Technique 
+
+L'effectif étant de petite taille des tests de normalité ont été effectués sur les variables principales en particulier le `délai chirurgical` qui n'a pas une distribution normale (test de shapiro : `r beaup(0.00007,affp = 1)`). Des tests non paramétriques ont donc été utilisés.
+
+Les données discrètes ont été présentés en pourcentage puis comparées par le test du $\Chi^2$ de Pearson avec correction de Yates si nécessaire. Les données numériques ont été présentées par leur médiane & les quartiles puis comparées par le test non paramétrique de Wilcoxon Mann Whitney ou une analyse de variance (ANOVA) si le critère de tri avait plus de deux modalités. 
+
+Les analyse en régression ont été réalisées dans un premier temps en incorporant toutes les variables significatives au seuil de 0,20 dans un modèle de régression puis une recherche du meilleur modèle en pas-à-pas descendant basé sur l'AIC a été effectuée. Néanmoins les variables majeures (période\dots) ont été forcées.
+
+L'analyse statistique a été réalisée avec le logiciel **R** [@rstat] & diverses librairies en particulier celles du `tidyverse` [@tidy] & `baseph` [@baseph].
