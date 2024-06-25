@@ -65,12 +65,26 @@ mutate(transfert = ifelse((transfert_beaumont == "yes") | (transfert_magny == "y
                                    dig.lab = 4,
                                    breaks = c(0, 50, 100, 1000),
                                    labels = c("<50", "50-100", "> 100"))) |> 
-  mutate(ddosage_rec = as.factor(ddosage_rec))
-
+  mutate(ddosage_rec = as.factor(ddosage_rec)) |> 
+  ## Recodage de tt$nb_medicament_entree en tt$nb_medicament_entree
+mutate(nb_medicament_entree = cut(nb_medicament_entree,
+  include.lowest = FALSE,
+  right = FALSE,
+  dig.lab = 2,
+  breaks = c(1, 5, 10, 20),
+  labels = c("<5", "5-9", "> 9")
+)) |> 
+## Recodage de tt$adl_avant en tt$adl_avant
+mutate(adl_avant = cut(adl_avant,
+  include.lowest = TRUE,
+  right = FALSE,
+  dig.lab = 4,
+  breaks = c(0, 2, 4, 5, 6),
+  labels = c("<2", "2-3","4", "5-6")
+))
   
-  
-  
-  
+tt$taux_adequation_protocole[tt$groupe == "avant"] <- NA
+#
 bn <- read_ods("datas/stopnaco.ods", sheet=2)
 var_label(tt) <- bn$nom
 

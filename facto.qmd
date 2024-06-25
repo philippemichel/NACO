@@ -1,0 +1,151 @@
+---
+title: "Stop NACO 2"
+subtitle: "Rapport Statistique - V 1.0"
+lang: fr
+language:
+  title-block-author-single: "Auteur"
+author:
+  - name: "D<sup>r</sup> Philippe MICHEL"
+    orcid: "0000-0003-2392-7186"
+    email: "philippe.michel@ght-novo.fr"
+    role: "Statisticien"
+    affiliations:
+      name: "USRC - H\u00f4pital NOVO"
+      city: Pontoise
+      department: "Unit\u00e9 de Soutien à la Recherche Clinique"
+title-block-banner: true
+format:
+  html:
+    embed-resources: true
+    theme: minty
+    code-fold: true
+    html-math-method: katex
+    highlight-style: ayu
+    page-layout: full
+    toc: true
+    number-sections: true
+    smooth-scroll: true
+    citation-hover: true
+bibliography: stat.bib
+# csl: jama.csl
+license: "MIT"
+warning: false
+message: false
+cache: false
+---
+
+::: {.panel-tabset}
+
+
+
+
+```{r}
+#| label: setup
+
+rm(list = ls())
+#
+library(baseph)
+library(janitor)
+library(tidyverse)
+library(gtsummary)
+library(kableExtra)
+library(lubridate)
+library(kableExtra)
+library(forestmodel)
+library(labelled)
+library(epiDisplay)
+library(missMDA)
+library(FactoMineR)
+library(factoextra)
+library(colorspace)
+library(xlsx)
+library(apyramid)
+library(plotly)
+#
+theme_gtsummary_language(language = "fr", decimal.mark = ",")
+options(OutDec = ",")
+#
+load("datas/stopnaco.RData")
+expx <- FALSE
+classeur <- "copsca1.xls"
+if (expx){system(paste0("rm -f ",classeur))}
+#
+cat <- list(all_continuous() ~ "wilcox.test", all_categorical() ~ "chisq.test")
+affl <- list(all_categorical()~"{n}/{N} ({p})")
+```
+
+# Imputation
+
+```{r}
+#| label: choix variables
+tta <- tt |> 
+  dplyr::select(!c(1,2,72,74,81,82,15,16,84)) |> 
+  dplyr::select(!starts_with(c("date","pec","delai","cgr", "pfc", "trst"))) |> 
+  janitor::remove_constant()
+## Recodage de tta$pertes_sanguines_estimees en tta$pertes_sanguines_estimees
+tta$pertes_sanguines_estimees <- cut(tta$pertes_sanguines_estimees,
+  include.lowest = TRUE,
+  right = FALSE,
+  dig.lab = 3,
+  breaks = c(0, 200, 400, 700)
+)
+## Recodage de tta$adl_avant en tta$adl_avant
+tta$adl_avant <- cut(tta$adl_avant,
+  include.lowest = TRUE,
+  right = FALSE,
+  dig.lab = 2,
+  breaks = c(0, 3, 5, 6, 7)
+)
+## Recodage de tta$total_cgr en tta$total_cgr_rec
+tta$total_cgr <- cut(tta$total_cgr,
+  include.lowest = TRUE,
+  right = FALSE,
+  dig.lab = 4,
+  breaks = c(0, 1, 5, 10)
+)
+## Recodage de tta$dms_structure en tta$dms_structure
+tta$dms_structure <- cut(tta$dms_structure,
+  include.lowest = TRUE,
+  right = FALSE,
+  dig.lab = 4,
+  breaks = c(0, 7, 14, 21, 30)
+)
+```
+
+```{r}
+#| label: imputation
+
+tta <- tta |> 
+  imputeMCA(ncp = 1)
+tta <- tta$completeObs
+tta$delai_chirurgical <- tt$delai_chirurgical
+```
+
+# Analyse
+
+```{r}
+#| label: analyse
+
+rtt <- MCA(tta,graph = TRUE,quanti.sup = "delai_chirurgical")
+```
+
+
+## individus
+
+## Période
+
+```{r}
+#| label: fig-individus0
+#| fig-cap: Graphiques des individus (par période)
+
+fviz_mca_ind(rtt, repel = TRUE, habillage = "groupe", geom = "point", addEllipses = TRUE)
+```
+
+
+## saignement per-op
+```{r}
+#| label: fig-individusper
+#| fig-cap: Graphiques des individus (saignement per op)
+
+fviz_mca_ind(rtt, repel = TRUE, habillage = "pertes_sanguines_estimees", geom = "point", addEllipses = TRUE)
+```
