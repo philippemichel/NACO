@@ -1,6 +1,6 @@
 ---
 title: "STOP-NACO"
-subtitle: "Rapport Statistique - V 1.1"
+subtitle: "Rapport Statistique - V 1.2"
 author: "D\\textsuperscript{r} Philippe \\textsc{Michel} -- USCR, Hôpital NOVO"
 lang: fr
 format:
@@ -80,8 +80,8 @@ theme_gtsummary_language(language = "fr", decimal.mark = ",")
 options(OutDec = ",")
 #
 load("datas/stopnaco.RData")
-expx <- TRUE
-classeur <- "copsca1.xls"
+expx <- FALSE
+classeur <- "copsca2.xls"
 if (expx){system(paste0("rm -f ",classeur))}
 #
 cat <- list(all_continuous() ~ "wilcox.test", all_categorical() ~ "chisq.test")
@@ -141,7 +141,7 @@ L'information `dernier dosage` n'est disponible que pour 127 cas.
 #| tbl-cap: Données démographiques
 
  tt |>
-dplyr::select(age,sexe,type_fracture:marche_avant, marche_avant_avec_aide, groupe) |>  
+dplyr::select(age,sexe,type_fracture:marche_avant_avec_aide,score_asa, groupe) |>  
 tbl_summary(missing = "no",
             statistic = affl,
             value = list(c(6:8,12:14) ~ "Oui"),
@@ -153,6 +153,36 @@ exp = expx)
 ```
 
 La seule différence gênante est l'évolution du score ASA qui semble plus élevé dans la seconde période.
+
+```{r}
+#| label: fig-asa
+#| fig-cap: Score ASA seoln la période
+
+tt |> 
+  ## Réordonnancement de tt$score_asa
+mutate(score_asa = fct_relevel(score_asa,
+    "4", "3", "2"
+  )) |> 
+  ggplot() +
+  aes(x = groupe, fill = score_asa) +
+  geom_bar(position = "fill") +
+    labs(title = "Score ASA selon la période",
+       x = "Période",
+       y = "%", 
+       fill = "ASA") +
+  theme_light() +
+  scale_y_continuous(labels = seq(0,100,25)) +
+  colorspace::scale_fill_discrete_qualitative(palette = "Dark 3") +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    plot.subtitle = element_text(size = 12),
+    axis.title.x = element_text(size = 12),
+    axis.title.y = element_text(size = 12),
+    legend.title = element_text(size = 12),
+    legend.position = "right") 
+```
+
+
 
 ```{r}
 #| label: fig-ages
@@ -185,7 +215,7 @@ On vérifie que dans la seconde période les pratiques se sont réellement modif
 #| tbl-cap: Modification des pratiques
 
 tt |>
-dplyr::select(groupe, taux_adequation_protocole,ddosage_rec) |>
+dplyr::select(groupe, taux_adequation_protocole,ddosage) |>
 tbl_summary(missing = "no", 
               value = list(taux_adequation_protocole ~ "Oui"),
             by = groupe) |>
@@ -200,8 +230,8 @@ exp = expx)
 #| fig-cap: Dernier dosage selon la période
 #| fig-asp: 0.8
 tt |>
-  drop_na(ddosage_rec) |>
-  ggplot(aes(fill = ddosage_rec, x = groupe)) +
+  drop_na(ddosage) |>
+  ggplot(aes(fill = ddosage, x = groupe)) +
   geom_bar(position = "fill") +
   labs(title = "Dernier dosage selon la période",
        x = "Période",
@@ -349,10 +379,10 @@ exp = expx)
 #| tbl-cap: Pertes sanguines estimées en per opératoire
 
 tt |>
-  filter(ddosage_rec != "> 100") |>
-  mutate(ddosage_rec = factor(ddosage_rec)) |>
+  filter(ddosage != "> 100") |>
+  mutate(ddosage = factor(ddosage)) |>
   drop_na(pertes_sanguines_estimees) |>
-tbl_continuous(variable = pertes_sanguines_estimees, include = c(groupe, ddosage_rec, score_asa)
+tbl_continuous(variable = pertes_sanguines_estimees, include = c(groupe, ddosage, score_asa)
                ) |>
 add_p(test = list(everything() ~ "aov")) |> 
 modify_spanning_header("stat_0" ~ "Pertes sanguines (mL)")|>
@@ -370,8 +400,8 @@ exp = expx)
 #| fig-asp: 0.8
 #| 
 zz <- tt |> 
-  filter(ddosage_rec != "> 100")
-lm(pertes_sanguines_estimees~groupe + ddosage_rec +score_asa, data = zz) |> 
+  filter(ddosage != "> 100")
+lm(pertes_sanguines_estimees~groupe + ddosage +score_asa, data = zz) |> 
   forest_model() 
 ```
 
@@ -384,10 +414,10 @@ Le saignement per-opératoire ne semble pas être influencé par le dernier dosa
 #| fig-asp: 1
 
 tt |> 
-  drop_na(ddosage_rec) |>
-  filter(ddosage_rec != "> 100") |>
+  drop_na(ddosage) |>
+  filter(ddosage != "> 100") |>
   ggplot() +
-  aes(y = pertes_sanguines_estimees, x = ddosage_rec, fill = ddosage_rec) +
+  aes(y = pertes_sanguines_estimees, x = ddosage, fill = ddosage) +
   geom_violin() +
   geom_boxplot(width = 0.2, fill = "grey90") +
   labs(title = "Pertes sanguines estimées en per opératoire & dosage antiXa",
@@ -443,9 +473,9 @@ Il n'y a pas de différence entre les deux périodes pour les transfusions sangu
 
 
 tt |>
-dplyr::select(ddosage_rec, cgr_pre_operatoire :acide_tranexamique) |>
+dplyr::select(ddosage, cgr_pre_operatoire :acide_tranexamique) |>
 tbl_summary(missing = "no", 
-            by = ddosage_rec) |> 
+            by = ddosage) |> 
 modify_header(label ~ " ") |>
 tabp(nom = "Dernier dosage (pg/mL") |> 
 pexptabph(nomfich = classeur,
@@ -454,6 +484,45 @@ exp = expx)
 ```     
 
 Il n'y a pas de différence pour les transfusions sanguines ou autre traitement de l'hémorragie selon le dernier dosage pré-op des NACOs.
+
+## Transfusion Oui/Non
+
+```{r}
+#| label: tbl-transon1
+#| tbl-cap: Transfusion Oui/Non (par période)
+
+
+
+tt |> 
+  mutate(across(contains(c("cgr","pfc")), ~ ifelse(. == 0, "Non", "Oui"))) |>
+  dplyr::select(contains(c("cgr","pfc")), groupe) |>
+  tbl_summary(by = groupe,
+              value = list(everything() ~ "Oui"),
+              missing = "no"
+  ) |> 
+  tabp() |> 
+  pexptabph(nomfich = classeur,
+nomsheet = "transfon1",
+exp = expx) 
+```
+
+```{r}
+#| label: tbl-transon2
+#| tbl-cap: Transfusion Oui/Non & dernier dosage
+
+tt |> 
+  mutate(across(contains(c("cgr","pfc")), ~ ifelse(. == 0, "Non", "Oui"))) |>
+  dplyr::select(contains(c("cgr","pfc")), ddosage) |>
+  tbl_summary(by = ddosage,
+             value = list(everything() ~ "Oui"),
+               missing = "no"
+  ) |> 
+  tabp(nn = 3, nom = "Dernier dosage (ng/mL)") |> 
+  pexptabph(nomfich = classeur,
+nomsheet = "transfon2",
+exp = expx) 
+```
+
 
 ## Morbi-mortalité hospitalière
 

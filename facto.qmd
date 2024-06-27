@@ -79,8 +79,8 @@ affl <- list(all_categorical()~"{n}/{N} ({p})")
 ```{r}
 #| label: choix variables
 tta <- tt |> 
-  dplyr::select(!c(1,2,72,74,81,82,15,16,84)) |> 
-  dplyr::select(!starts_with(c("date","pec","delai","cgr", "pfc", "trst"))) |> 
+  dplyr::select(!c(id,age, delai_chirurgical, premier_dosage, dernier_dosage, deces_intra_hospitalier)) |> 
+  dplyr::select(!starts_with(c("nb_med","hemoglobine","date","pec","delai","cgr", "pfc", "trst"))) |> 
   janitor::remove_constant()
 ## Recodage de tta$pertes_sanguines_estimees en tta$pertes_sanguines_estimees
 tta$pertes_sanguines_estimees <- cut(tta$pertes_sanguines_estimees,
@@ -88,13 +88,6 @@ tta$pertes_sanguines_estimees <- cut(tta$pertes_sanguines_estimees,
   right = FALSE,
   dig.lab = 3,
   breaks = c(0, 200, 400, 700)
-)
-## Recodage de tta$adl_avant en tta$adl_avant
-tta$adl_avant <- cut(tta$adl_avant,
-  include.lowest = TRUE,
-  right = FALSE,
-  dig.lab = 2,
-  breaks = c(0, 3, 5, 6, 7)
 )
 ## Recodage de tta$total_cgr en tta$total_cgr_rec
 tta$total_cgr <- cut(tta$total_cgr,
@@ -120,6 +113,18 @@ tta <- tta |>
 tta <- tta$completeObs
 tta$delai_chirurgical <- tt$delai_chirurgical
 ```
+
+## Validation du modèle
+
+```{r}
+#| label: fig-variance
+#| fig-cap: Validation du modèle
+
+fviz_screeplot(rtt, addlabels = TRUE, ylim = c(0, 20))
+
+```
+
+Les deux dimensions étudiées sur les graphiques suivants ne représentent que 13 % de la variance totale.
 
 # Analyse
 
@@ -149,3 +154,14 @@ fviz_mca_ind(rtt, repel = TRUE, habillage = "groupe", geom = "point", addEllipse
 
 fviz_mca_ind(rtt, repel = TRUE, habillage = "pertes_sanguines_estimees", geom = "point", addEllipses = TRUE)
 ```
+
+# Variables
+
+```{r}
+#| label: fig-var1
+#| fig-cap: Graphiques des variables
+
+
+fviz_mca_var(rtt, repel = TRUE)
+```
+

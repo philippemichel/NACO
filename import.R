@@ -59,13 +59,13 @@ mutate(transfert = ifelse((transfert_beaumont == "yes") | (transfert_magny == "y
                       labels = c("70-75", "76-80", "81-85", "86-90", "91-95", "96-100")
   ))|>
   mutate(agerec = as.factor(agerec)) |> 
-  mutate(ddosage_rec = cut(dernier_dosage,
+  mutate(ddosage = cut(dernier_dosage,
                                    include.lowest = TRUE,
                                    right = FALSE,
                                    dig.lab = 4,
                                    breaks = c(0, 50, 100, 1000),
                                    labels = c("<50", "50-100", "> 100"))) |> 
-  mutate(ddosage_rec = as.factor(ddosage_rec)) |> 
+  mutate(ddosage = as.factor(ddosage)) |> 
   ## Recodage de tt$nb_medicament_entree en tt$nb_medicament_entree
 mutate(nb_medicament_entree = cut(nb_medicament_entree,
   include.lowest = FALSE,
@@ -81,7 +81,11 @@ mutate(adl_avant = cut(adl_avant,
   dig.lab = 4,
   breaks = c(0, 2, 4, 5, 6),
   labels = c("<2", "2-3","4", "5-6")
-))
+)) |> 
+## Réordonnancement de tt$cause_retard
+mutate(cause_retard =  fct_relevel(cause_retard,
+    "Pas de retard", "Logistique", "NACO", "Patient"
+  ))
   
 tt$taux_adequation_protocole[tt$groupe == "avant"] <- NA
 #
